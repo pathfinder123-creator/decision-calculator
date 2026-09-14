@@ -165,12 +165,19 @@
   @media (max-width:760px){
     .wrap{width:min(100% - 18px,1120px)}
     .hero{
-      min-height:370px;margin-top:10px;padding:24px 20px;border-radius:22px;
+      min-height:0;margin-top:10px;padding:24px 20px 22px;border-radius:22px;
+      display:flex;flex-direction:column;align-items:center;
+      background-position:-9999px -9999px;background-size:auto 100%;
+    }
+    .hero::before{
+      content:"";display:block;width:172px;height:182px;margin:0 auto 15px;
+      flex:0 0 auto;background-image:inherit;background-repeat:no-repeat;
       background-position:right center;background-size:auto 100%;
     }
-    .hero-copy,.principle{width:61%}
-    .hero p{font-size:.95rem}
-    .principle{font-size:.84rem;padding:10px 11px}
+    .hero-top,.hero-copy{width:100%}
+    .hero-copy{text-align:center}
+    .hero p{max-width:620px;margin-inline:auto;font-size:.97rem}
+    .principle{width:100%;max-width:620px;margin-top:17px;font-size:.86rem;padding:11px 12px;text-align:left}
     .panel{padding:18px}
     .decision-row,.calc-grid,.prompt-grid{grid-template-columns:1fr}
     .map{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -179,12 +186,12 @@
     .factor-text{grid-column:1/-1}
   }
   @media (max-width:480px){
-    .hero{min-height:355px;padding:22px 16px;background-position:82% center}
-    .hero-copy,.principle{width:60%}
-    h1{font-size:clamp(1.65rem,8vw,2rem)}
-    .eyebrow{font-size:.68rem}
-    .hero p{font-size:.86rem;line-height:1.4}
-    .principle{margin-top:13px;font-size:.76rem;line-height:1.35}
+    .hero{padding:20px 16px 18px}
+    .hero::before{width:150px;height:159px;margin-bottom:13px}
+    h1{font-size:clamp(1.85rem,9vw,2.35rem);margin-top:.3rem}
+    .eyebrow{font-size:.7rem}
+    .hero p{font-size:.91rem;line-height:1.45}
+    .principle{margin-top:14px;font-size:.8rem;line-height:1.4}
   }
   @media print{
     body{background:white}
