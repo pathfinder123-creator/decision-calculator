@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Decision Calculator</title>
+<style>
+  :root{
+    --ink:#172033;
+    --muted:#5f6b7a;
+    --line:#dbe2ea;
+    --panel:#ffffff;
+    --page:#f4f7fb;
+    --accent:#243b67;
+    --accent-2:#365a96;
+    --plus:#2f7d55;
+    --minus:#d9363e;
+    --risk:#e5ad18;
+    --know:#4f5ea8;
+    --shadow:0 14px 36px rgba(25,40,70,.10);
+    --radius:22px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color:var(--ink);
+    background:linear-gradient(180deg,#eef3fa 0,#f7f9fc 240px,#f7f9fc 100%);
+    line-height:1.5;
+  }
+  button,input,textarea,select{font:inherit}
+  button{cursor:pointer}
+  .wrap{width:min(1120px,calc(100% - 32px));margin:0 auto 64px}
+  .hero{
+    margin:28px auto 20px;
+    padding:34px 34px 30px;
+    border-radius:28px;
+    color:white;
+    background:
+      radial-gradient(circle at 88% 25%,rgba(255,255,255,.14),transparent 22%),
+      linear-gradient(135deg,#182c52,#2f558b);
+    box-shadow:var(--shadow);
+  }
+  .eyebrow{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;font-weight:800;opacity:.78}
+  h1{font-size:clamp(2rem,4vw,3.45rem);line-height:1.03;margin:.25rem 0 .55rem}
+  .hero p{max-width:760px;margin:0;color:#e7edf8;font-size:1.03rem}
+  .hero-top{
+    display:flex;align-items:center;justify-content:space-between;gap:28px;
+  }
+  .hero-copy{min-width:0;flex:1}
+  .calculator-logo{
+    flex:0 0 154px;width:154px;padding:11px;border:4px solid rgba(255,255,255,.92);
+    border-radius:22px;background:rgba(10,27,57,.34);
+    box-shadow:0 10px 24px rgba(4,17,40,.22), inset 0 0 0 2px rgba(255,255,255,.14);
+  }
+  .calculator-screen{
+    height:22px;margin:0 2px 9px;border-radius:7px;
+    border:2px solid rgba(255,255,255,.78);background:rgba(255,255,255,.10);
+  }
+  .calculator-keys{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .calculator-key{
+    height:42px;border-radius:9px;display:grid;place-items:center;
+    color:white;font-size:1.65rem;font-weight:900;line-height:1;
+    border:2px solid rgba(255,255,255,.92);
+    box-shadow:inset 0 -2px 0 rgba(0,0,0,.12);
+  }
+  .calculator-key.plus{background:var(--plus)}
+  .calculator-key.minus{background:var(--minus)}
+  .calculator-key.risk{background:var(--risk);color:#172033}
+  .calculator-key.know{background:var(--know)}
+  .calculator-key.equals{
+    grid-column:1/-1;background:var(--accent-2);height:38px;
+  }
+  .metric.benefit{border-top:5px solid var(--plus)}
+  .metric.cost{border-top:5px solid var(--minus)}
+  .metric.risk{border-top:5px solid var(--risk)}
+  .metric.unknown{border-top:5px solid var(--know)}
+  .metric.benefit .v{color:var(--plus)}
+  .metric.cost .v{color:var(--minus)}
+  .metric.risk .v{color:#b27a00}
+  .metric.unknown .v{color:var(--know)}
+  .principle{
+    margin-top:18px;
+    border:1px solid rgba(255,255,255,.25);
+    background:rgba(255,255,255,.08);
+    padding:12px 14px;
+    border-radius:14px;
+    font-size:.92rem;
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:0 8px 24px rgba(25,40,70,.06);
+    padding:24px;
+    margin-top:18px;
+  }
+  .step-title{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+  .step-num{
+    flex:0 0 auto;width:34px;height:34px;border-radius:10px;
+    display:grid;place-items:center;background:#eaf0fa;color:var(--accent);font-weight:900
+  }
+  h2{margin:0;font-size:1.25rem}
+  .sub{color:var(--muted);font-size:.94rem;margin-top:3px}
+  label{display:block;font-weight:750;margin-bottom:7px}
+  input[type="text"], textarea, select{
+    width:100%;border:1px solid #cdd6e2;background:white;color:var(--ink);
+    border-radius:12px;padding:12px 13px;outline:none;transition:.15s;
+  }
+  input[type="text"]:focus,textarea:focus,select:focus{
+    border-color:#6b8cc0;box-shadow:0 0 0 3px rgba(54,90,150,.12)
+  }
+  textarea{min-height:90px;resize:vertical}
+  .decision-row{display:grid;grid-template-columns:1fr 180px;gap:14px}
+  .status-box{
+    border-radius:14px;background:#f6f8fb;border:1px solid var(--line);
+    padding:12px 14px;display:flex;flex-direction:column;justify-content:center
+  }
+  .status-box b{font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .status-box span{font-weight:800;margin-top:3px}
+  .calc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  .calc-card{
+    border:1px solid var(--line);border-radius:20px;padding:18px;background:#fff;
+    position:relative;overflow:hidden
+  }
+  .calc-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--cat)}
+  .cat-head{display:flex;gap:14px;align-items:center;margin-bottom:8px}
+  .symbol{
+    width:52px;height:52px;border-radius:15px;display:grid;place-items:center;
+    background:color-mix(in srgb,var(--cat) 12%, white);color:var(--cat);
+    font-weight:900;font-size:2rem;line-height:1
+  }
+  .cat-head h3{margin:0;font-size:1.13rem}
+  .cat-head p{margin:2px 0 0;color:var(--muted);font-size:.9rem}
+  .add-row{display:grid;grid-template-columns:1fr 110px;gap:10px;margin-top:12px}
+  .btn{
+    border:0;border-radius:12px;padding:11px 14px;font-weight:800;
+    background:#e8edf4;color:#24334d
+  }
+  .btn.primary{background:var(--accent);color:white}
+  .btn.cat{background:var(--cat);color:white}
+  .btn.ghost{background:white;border:1px solid var(--line)}
+  .btn.danger{background:#fff1f0;color:#8b2f2a;border:1px solid #f0c7c4}
+  .btn:hover{filter:brightness(.98)}
+  .items{margin-top:14px;display:grid;gap:9px}
+  .empty{
+    padding:12px;border:1px dashed #cfd7e3;border-radius:12px;color:var(--muted);
+    font-size:.9rem;background:#fafbfd
+  }
+  .factor{
+    display:grid;grid-template-columns:1fr 124px 38px;gap:9px;align-items:center;
+    border:1px solid #e2e7ee;border-radius:12px;padding:9px 9px 9px 12px;background:#fbfcfe
+  }
+  .factor-text{font-size:.94rem;word-break:break-word}
+  .factor select{padding:8px;font-size:.88rem}
+  .remove{
+    width:34px;height:34px;border-radius:10px;border:0;background:#eef1f5;color:#5d6877;font-size:1.1rem
+  }
+  .map{
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:12px
+  }
+  .metric{
+    padding:15px;border-radius:16px;background:#f8fafc;border:1px solid var(--line)
+  }
+  .metric .k{font-size:.78rem;font-weight:850;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  .metric .v{font-size:1.55rem;font-weight:900;margin-top:2px}
+  .metric .note{font-size:.82rem;color:var(--muted)}
+  .reflection{
+    margin-top:16px;padding:17px;border-radius:16px;background:#f1f5fb;border:1px solid #d5dfef
+  }
+  .reflection h3{margin:0 0 7px;font-size:1rem}
+  .reflection p{margin:0;color:#334158}
+  .prompt-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
+  .prompt{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff}
+  .prompt label{font-size:.92rem}
+  .prompt textarea{min-height:94px}
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+  .fineprint{font-size:.82rem;color:var(--muted);margin-top:12px}
+  .saved{color:#2d6d4e;font-weight:700}
+  .hidden{display:none!important}
+  footer{color:var(--muted);font-size:.82rem;text-align:center;margin-top:24px}
+  @media (max-width:760px){
+    .wrap{width:min(100% - 18px,1120px)}
+    .hero{margin-top:10px;padding:26px 20px;border-radius:22px}
+    .hero-top{align-items:flex-start;gap:14px}
+    .calculator-logo{flex-basis:104px;width:104px;padding:7px;border-width:3px;border-radius:16px}
+    .calculator-screen{height:14px;margin-bottom:6px}
+    .calculator-keys{gap:5px}
+    .calculator-key{height:29px;font-size:1.15rem;border-width:1.5px;border-radius:6px}
+    .calculator-key.equals{height:26px}
+    .panel{padding:18px}
+    .decision-row,.calc-grid,.prompt-grid{grid-template-columns:1fr}
+    .map{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .add-row{grid-template-columns:1fr}
+    .factor{grid-template-columns:1fr 110px 38px}
+    .factor-text{grid-column:1/-1}
+  }
+  @media (max-width:480px){
+    .hero-top{display:grid;grid-template-columns:1fr auto}
+    h1{font-size:2rem}
+    .hero p{grid-column:1/-1}
+  }
+  @media print{
+    body{background:white}
+    .wrap{width:100%;margin:0}
+    .hero{box-shadow:none;color:#111;background:white;border:2px solid #222;padding:18px}
+    .hero p,.principle{color:#333}
+    .panel{box-shadow:none;break-inside:avoid}
+    .toolbar,.add-row,.remove,.fineprint,#loadFileLabel{display:none!important}
+    .calc-grid{display:grid;grid-template-columns:1fr 1fr}
+    .calc-card{break-inside:avoid}
+    textarea{border:0;padding:0;min-height:unset;overflow:visible}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="hero-top">
+      <div class="hero-copy">
+        <div class="eyebrow">A structured reflection tool</div>
+        <h1>The Decision Calculator</h1>
+        <p>Put an important choice on the screen, identify what matters, and weigh the factors you want to consider before you decide.</p>
+      </div>
+      <div class="calculator-logo" role="img" aria-label="Calculator logo with Gain, Cost, Risk, Need to Know, and equals keys">
+        <div class="calculator-screen"></div>
+        <div class="calculator-keys">
+          <div class="calculator-key plus">+</div>
+          <div class="calculator-key minus">−</div>
+          <div class="calculator-key risk">×</div>
+          <div class="calculator-key know">÷</div>
+          <div class="calculator-key equals">=</div>
+        </div>
+      </div>
+    </div>
+    <div class="principle"><strong>This tool does not make the decision for you.</strong> It helps you slow the process down, surface the strongest considerations, and identify what you may still need to learn.</div>
+  </header>
+
+  <section class="panel">
+    <div class="step-title">
+      <div class="step-num">1</div>
+      <div><h2>Name the decision</h2><div class="sub">Describe the choice or change you are considering in one sentence.</div></div>
+    </div>
+    <div class="decision-row">
+      <div>
+        <label for="decision">What are you deciding?</label>
+        <input id="decision" type="text" placeholder="Example: Should I accept the new position?">
+      </div>
+      <div class="status-box">
+        <b>Progress</b>
+        <span id="progressText">Start by naming the decision.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="step-title">
+      <div class="step-num">2</div>
+      <div><h2>Work the four keys</h2><div class="sub">Add one factor at a time. Then mark how important that factor is to you right now.</div></div>
+    </div>
+
+    <div class="calc-grid">
+      <article class="calc-card" style="--cat:var(--plus)" data-cat="benefit">
+        <div class="cat-head"><div class="symbol">+</div><div><h3>Gain / Benefit</h3><p>What could this choice add, improve, open, or make possible?</p></div></div>
+        <div class="add-row">
+          <input type="text" class="factor-input" placeholder="Add a gain or benefit">
+          <button class="btn cat add-factor">Add</button>
+        </div>
+        <div class="items" id="benefitItems"></div>
+      </article>
+
+      <article class="calc-card" style="--cat:var(--minus)" data-cat="cost">
+        <div class="cat-head"><div class="symbol">−</div><div><h3>Cost / Loss</h3><p>What could this choice require, reduce, interrupt, or cause you to give up?</p></div></div>
+        <div class="add-row">
+          <input type="text" class="factor-input" placeholder="Add a cost or loss">
+          <button class="btn cat add-factor">Add</button>
+        </div>
+        <div class="items" id="costItems"></div>
+      </article>
+
+      <article class="calc-card" style="--cat:var(--risk)" data-cat="risk">
+        <div class="cat-head"><div class="symbol">×</div><div><h3>Risk</h3><p>What could go wrong, become harder, or create consequences you need to consider?</p></div></div>
+        <div class="add-row">
+          <input type="text" class="factor-input" placeholder="Add a risk">
+          <button class="btn cat add-factor">Add</button>
+        </div>
+        <div class="items" id="riskItems"></div>
+      </article>
+
+      <article class="calc-card" style="--cat:var(--know)" data-cat="unknown">
+        <div class="cat-head"><div class="symbol">÷</div><div><h3>Need to Know</h3><p>What information, answer, conversation, or fact would help you judge the choice more clearly?</p></div></div>
+        <div class="add-row">
+          <input type="text" class="factor-input" placeholder="Add something you need to know">
+          <button class="btn cat add-factor">Add</button>
+        </div>
+        <div class="items" id="unknownItems"></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="step-title">
+      <div class="step-num">3</div>
+      <div><h2>Read the decision map</h2><div class="sub">The numbers summarize what <em>you</em> entered. They are not a recommendation or a verdict.</div></div>
+    </div>
+
+    <div class="map">
+      <div class="metric benefit"><div class="k">Gain / Benefit</div><div class="v" id="benefitScore">0</div><div class="note">importance points</div></div>
+      <div class="metric cost"><div class="k">Cost / Loss</div><div class="v" id="costScore">0</div><div class="note">importance points</div></div>
+      <div class="metric risk"><div class="k">Risk</div><div class="v" id="riskScore">0</div><div class="note">importance points</div></div>
+      <div class="metric unknown"><div class="k">Need to Know</div><div class="v" id="unknownScore">0</div><div class="note">open questions</div></div>
+    </div>
+
+    <div class="reflection">
+      <h3>Decision reflection</h3>
+      <p id="reflectionText">Add a few factors above and your reflection will appear here.</p>
+    </div>
+
+    <div class="prompt-grid">
+      <div class="prompt">
+        <label for="mostImportant">Which factor feels most important—and why?</label>
+        <textarea id="mostImportant" placeholder="Write your reflection here..."></textarea>
+      </div>
+      <div class="prompt">
+        <label for="nextStep">What is the next useful step before deciding?</label>
+        <textarea id="nextStep" placeholder="A conversation, fact to verify, deadline, trial step, time to think..."></textarea>
+      </div>
+      <div class="prompt">
+        <label for="values">Which personal value or priority is most involved?</label>
+        <textarea id="values" placeholder="Examples: stability, growth, family, purpose, flexibility, security..."></textarea>
+      </div>
+      <div class="prompt">
+        <label for="gutCheck">After seeing everything together, what are you noticing?</label>
+        <textarea id="gutCheck" placeholder="Notice your reaction without forcing a conclusion..."></textarea>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="step-title">
+      <div class="step-num">4</div>
+      <div><h2>Keep a copy</h2><div class="sub">Save your work in this browser, download a portable copy, print it, or share a plain-text summary.</div></div>
+    </div>
+    <div class="toolbar">
+      <button class="btn primary" id="saveBtn">Save progress</button>
+      <button class="btn ghost" id="downloadBtn">Download copy</button>
+      <label class="btn ghost" id="loadFileLabel" for="loadFile">Load copy</label>
+      <input class="hidden" id="loadFile" type="file" accept=".json,application/json">
+      <button class="btn ghost" id="printBtn">Print / Save PDF</button>
+      <button class="btn ghost" id="shareBtn">Send / Share</button>
+      <button class="btn danger" id="clearBtn">Start over</button>
+    </div>
+    <div class="fineprint"><span id="saveState">Your entries stay on this device unless you choose to download or share them.</span></div>
+  </section>
+
+  <footer>The Decision Calculator • Reflection support, not decision-making advice<br><strong>Mentallurgy LifeChange 2026</strong></footer>
+</div>
+
+<script>
+const categories = ["benefit","cost","risk","unknown"];
+const labels = {
+  benefit:"Gain / Benefit",
+  cost:"Cost / Loss",
+  risk:"Risk",
+  unknown:"Need to Know"
+};
+
+let state = {
+  decision:"",
+  items:{benefit:[],cost:[],risk:[],unknown:[]},
+  reflections:{mostImportant:"",nextStep:"",values:"",gutCheck:""}
+};
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));
+}
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+function renderItems(cat){
+  const host = document.getElementById(cat+"Items");
+  const arr = state.items[cat];
+  if(!arr.length){
+    host.innerHTML = '<div class="empty">No factors added yet.</div>';
+    return;
+  }
+  host.innerHTML = arr.map(item => `
+    <div class="factor" data-id="${item.id}">
+      <div class="factor-text">${esc(item.text)}</div>
+      <select class="importance" aria-label="Importance">
+        ${[1,2,3,4,5].map(n=>`<option value="${n}" ${Number(item.weight)===n?"selected":""}>${n} - ${["","Low","Some","Medium","High","Very high"][n]}</option>`).join("")}
+      </select>
+      <button class="remove" aria-label="Remove factor" title="Remove">×</button>
+    </div>`).join("");
+}
+
+function scores(){
+  return {
+    benefit: state.items.benefit.reduce((a,x)=>a+Number(x.weight||0),0),
+    cost: state.items.cost.reduce((a,x)=>a+Number(x.weight||0),0),
+    risk: state.items.risk.reduce((a,x)=>a+Number(x.weight||0),0),
+    unknown: state.items.unknown.length
+  };
+}
+
+function buildReflection(){
+  const s=scores();
+  const totalFactors=categories.reduce((n,c)=>n+state.items[c].length,0);
+  if(totalFactors<2) return "Add a few factors above and your reflection will appear here.";
+
+  const parts=[];
+  const knownScores=[["benefits",s.benefit],["costs",s.cost],["risks",s.risk]];
+  const max=Math.max(s.benefit,s.cost,s.risk);
+  const leaders=knownScores.filter(x=>x[1]===max && max>0).map(x=>x[0]);
+
+  if(leaders.length===1){
+    parts.push(`Your entries place the greatest stated weight on ${leaders[0]}.`);
+  }else if(leaders.length>1){
+    parts.push(`Two or more parts of the decision currently carry similar stated weight, which may be worth examining rather than forcing an early conclusion.`);
+  }
+
+  const spread=Math.max(s.benefit,s.cost,s.risk)-Math.min(s.benefit,s.cost,s.risk);
+  if(spread<=3 && (s.benefit+s.cost+s.risk)>0){
+    parts.push("The major considerations are relatively close in weight, suggesting that the decision may depend more on priorities than on a simple pros-and-cons count.");
+  }
+
+  if(s.unknown>0){
+    parts.push(`You also identified ${s.unknown} open question${s.unknown===1?"":"s"}. Resolving the most important unknown may change how the other factors look.`);
+  }else{
+    parts.push("You have not listed any open questions yet; consider whether there is information you would want before committing.");
+  }
+
+  parts.push("Use this pattern as a prompt for reflection—not as a score telling you what to choose.");
+  return parts.join(" ");
+}
+
+function update(){
+  document.getElementById("decision").value=state.decision;
+  categories.forEach(renderItems);
+  const s=scores();
+  document.getElementById("benefitScore").textContent=s.benefit;
+  document.getElementById("costScore").textContent=s.cost;
+  document.getElementById("riskScore").textContent=s.risk;
+  document.getElementById("unknownScore").textContent=s.unknown;
+  document.getElementById("reflectionText").textContent=buildReflection();
+  Object.entries(state.reflections).forEach(([k,v])=>document.getElementById(k).value=v);
+
+  const count=categories.reduce((n,c)=>n+state.items[c].length,0);
+  const p=document.getElementById("progressText");
+  p.textContent = !state.decision ? "Start by naming the decision."
+    : count===0 ? "Decision named. Add your first factor."
+    : count<4 ? `${count} factor${count===1?"":"s"} added.`
+    : `${count} factors mapped. Review your reflection.`;
+}
+
+function addFactor(card){
+  const cat=card.dataset.cat;
+  const input=card.querySelector(".factor-input");
+  const text=input.value.trim();
+  if(!text) return;
+  state.items[cat].push({id:uid(),text,weight:3});
+  input.value="";
+  update();
+  input.focus();
+}
+
+document.querySelectorAll(".calc-card").forEach(card=>{
+  card.querySelector(".add-factor").addEventListener("click",()=>addFactor(card));
+  card.querySelector(".factor-input").addEventListener("keydown",e=>{
+    if(e.key==="Enter"){ e.preventDefault(); addFactor(card); }
+  });
+  card.addEventListener("change",e=>{
+    if(e.target.classList.contains("importance")){
+      const row=e.target.closest(".factor");
+      const item=state.items[card.dataset.cat].find(x=>x.id===row.dataset.id);
+      if(item) item.weight=Number(e.target.value);
+      update();
+    }
+  });
+  card.addEventListener("click",e=>{
+    if(e.target.classList.contains("remove")){
+      const row=e.target.closest(".factor");
+      state.items[card.dataset.cat]=state.items[card.dataset.cat].filter(x=>x.id!==row.dataset.id);
+      update();
+    }
+  });
+});
+
+document.getElementById("decision").addEventListener("input",e=>{state.decision=e.target.value;updateSummaryOnly();});
+["mostImportant","nextStep","values","gutCheck"].forEach(id=>{
+  document.getElementById(id).addEventListener("input",e=>state.reflections[id]=e.target.value);
+});
+
+function updateSummaryOnly(){
+  const count=categories.reduce((n,c)=>n+state.items[c].length,0);
+  const p=document.getElementById("progressText");
+  p.textContent = !state.decision ? "Start by naming the decision."
+    : count===0 ? "Decision named. Add your first factor."
+    : count<4 ? `${count} factor${count===1?"":"s"} added.`
+    : `${count} factors mapped. Review your reflection.`;
+}
+
+function saveLocal(){
+  localStorage.setItem("decisionCalculatorState",JSON.stringify(state));
+  const el=document.getElementById("saveState");
+  el.textContent="Saved in this browser.";
+  el.className="saved";
+  setTimeout(()=>{el.textContent="Your entries stay on this device unless you choose to download or share them.";el.className="";},2500);
+}
+document.getElementById("saveBtn").addEventListener("click",saveLocal);
+
+function filenameBase(){
+  const raw=(state.decision||"decision-calculator").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,45);
+  return raw || "decision-calculator";
+}
+
+document.getElementById("downloadBtn").addEventListener("click",()=>{
+  const payload={app:"The Decision Calculator",version:1,savedAt:new Date().toISOString(),...state};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=filenameBase()+".decision.json";
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),500);
+});
+
+document.getElementById("loadFile").addEventListener("change",async e=>{
+  const file=e.target.files[0];
+  if(!file) return;
+  try{
+    const data=JSON.parse(await file.text());
+    if(!data.items || !data.reflections) throw new Error("Invalid file");
+    state={
+      decision:data.decision||"",
+      items:{
+        benefit:Array.isArray(data.items.benefit)?data.items.benefit:[],
+        cost:Array.isArray(data.items.cost)?data.items.cost:[],
+        risk:Array.isArray(data.items.risk)?data.items.risk:[],
+        unknown:Array.isArray(data.items.unknown)?data.items.unknown:[]
+      },
+      reflections:{
+        mostImportant:data.reflections.mostImportant||"",
+        nextStep:data.reflections.nextStep||"",
+        values:data.reflections.values||"",
+        gutCheck:data.reflections.gutCheck||""
+      }
+    };
+    update();
+  }catch(err){
+    alert("That file could not be loaded as a Decision Calculator copy.");
+  }
+  e.target.value="";
+});
+
+document.getElementById("printBtn").addEventListener("click",()=>window.print());
+
+function plainText(){
+  const s=scores();
+  const lines=[
+    "THE DECISION CALCULATOR",
+    "",
+    "Decision: "+(state.decision||"(not entered)"),
+    "",
+  ];
+  categories.forEach(cat=>{
+    lines.push(labels[cat].toUpperCase());
+    if(!state.items[cat].length) lines.push("- None entered");
+    state.items[cat].forEach(x=>lines.push(`- ${x.text} [importance ${x.weight}/5]`));
+    lines.push("");
+  });
+  lines.push("DECISION MAP");
+  lines.push(`Gain / Benefit importance points: ${s.benefit}`);
+  lines.push(`Cost / Loss importance points: ${s.cost}`);
+  lines.push(`Risk importance points: ${s.risk}`);
+  lines.push(`Need to Know open questions: ${s.unknown}`);
+  lines.push("");
+  lines.push("DECISION REFLECTION");
+  lines.push(buildReflection());
+  lines.push("");
+  lines.push("Which factor feels most important—and why?");
+  lines.push(state.reflections.mostImportant||"(not entered)");
+  lines.push("");
+  lines.push("What is the next useful step before deciding?");
+  lines.push(state.reflections.nextStep||"(not entered)");
+  lines.push("");
+  lines.push("Which personal value or priority is most involved?");
+  lines.push(state.reflections.values||"(not entered)");
+  lines.push("");
+  lines.push("After seeing everything together, what are you noticing?");
+  lines.push(state.reflections.gutCheck||"(not entered)");
+  lines.push("");
+  lines.push("This reflection supports decision-making; it does not make the decision.");
+  return lines.join("\n");
+}
+
+document.getElementById("shareBtn").addEventListener("click",async()=>{
+  const text=plainText();
+  if(navigator.share){
+    try{ await navigator.share({title:"The Decision Calculator",text}); return; }catch(e){ if(e.name==="AbortError") return; }
+  }
+  const subject=encodeURIComponent("My Decision Calculator reflection");
+  const body=encodeURIComponent(text);
+  window.location.href=`mailto:?subject=${subject}&body=${body}`;
+});
+
+document.getElementById("clearBtn").addEventListener("click",()=>{
+  if(!confirm("Clear all entries and start over?")) return;
+  state={decision:"",items:{benefit:[],cost:[],risk:[],unknown:[]},reflections:{mostImportant:"",nextStep:"",values:"",gutCheck:""}};
+  localStorage.removeItem("decisionCalculatorState");
+  update();
+  window.scrollTo({top:0,behavior:"smooth"});
+});
+
+try{
+  const saved=JSON.parse(localStorage.getItem("decisionCalculatorState")||"null");
+  if(saved && saved.items && saved.reflections) state=saved;
+}catch(e){}
+update();
+</script>
+</body>
+</html>
